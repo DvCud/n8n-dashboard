@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { fetchAllWorkflows, calculateGalaxyPositions } from '@/lib/api';
-import { getCachedWorkflows, cacheWorkflows, getCacheMetadata } from '@/lib/supabase';
+import { getCachedWorkflows, cacheWorkflows, getCacheMetadata, isSupabaseConfigured } from '@/lib/supabase';
 import type { WorkflowMetadata } from '@/types/workflow';
 
 // Cache control: revalidate every 5 minutes
@@ -16,14 +16,10 @@ const CACHE_DURATION_MS = 5 * 60 * 1000;
 
 export async function GET() {
     try {
-        // Check if Supabase is configured
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const useSupabase = supabaseUrl && supabaseUrl.length > 0 && !supabaseUrl.includes('your-project');
-
         let workflows: WorkflowMetadata[] = [];
         let source = 'github';
 
-        if (useSupabase) {
+        if (isSupabaseConfigured) {
             // Try to get cached data from Supabase
             const { lastUpdated } = await getCacheMetadata();
 
@@ -83,7 +79,7 @@ export async function GET() {
             data: positioned,
             count: positioned.length,
             source,
-            supabaseConnected: useSupabase,
+            supabaseConnected: isSupabaseConfigured,
             timestamp: new Date().toISOString(),
         });
     } catch (error) {
@@ -105,10 +101,7 @@ export async function POST() {
     try {
         const workflows = await fetchAllWorkflows();
 
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const useSupabase = supabaseUrl && supabaseUrl.length > 0;
-
-        if (useSupabase) {
+        if (isSupabaseConfigured) {
             await cacheWorkflows(workflows.map(w => ({
                 id: w.id,
                 name: w.name,

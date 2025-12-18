@@ -1,8 +1,9 @@
 // ============================================================
 // Supabase Client Configuration
+// Handles graceful fallback when Supabase is not configured
 // ============================================================
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Environment variables for Supabase connection
 // These should be set in .env.local for development
@@ -10,8 +11,20 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Check if Supabase is properly configured
+const isSupabaseConfigured =
+    supabaseUrl.length > 0 &&
+    supabaseAnonKey.length > 0 &&
+    !supabaseUrl.includes('your-project');
+
+// Create Supabase client only if configured, otherwise null
+let supabase: SupabaseClient | null = null;
+
+if (isSupabaseConfigured) {
+    supabase = createClient(supabaseUrl, supabaseAnonKey);
+}
+
+export { supabase, isSupabaseConfigured };
 
 /**
  * Database Types for workflow caching
@@ -43,6 +56,8 @@ export interface AnalyticsEvent {
  * Fetch cached workflows from Supabase
  */
 export async function getCachedWorkflows(): Promise<WorkflowCache[]> {
+    if (!supabase) return [];
+
     const { data, error } = await supabase
         .from('workflows')
         .select('*')
@@ -60,6 +75,8 @@ export async function getCachedWorkflows(): Promise<WorkflowCache[]> {
  * Cache workflows in Supabase (upsert)
  */
 export async function cacheWorkflows(workflows: Omit<WorkflowCache, 'created_at' | 'updated_at'>[]): Promise<boolean> {
+    if (!supabase) return false;
+
     const { error } = await supabase
         .from('workflows')
         .upsert(
@@ -82,6 +99,8 @@ export async function cacheWorkflows(workflows: Omit<WorkflowCache, 'created_at'
  * Get cache metadata (last update time)
  */
 export async function getCacheMetadata(): Promise<{ lastUpdated: string | null }> {
+    if (!supabase) return { lastUpdated: null };
+
     const { data, error } = await supabase
         .from('workflows')
         .select('updated_at')
@@ -100,6 +119,8 @@ export async function getCacheMetadata(): Promise<{ lastUpdated: string | null }
  * Log analytics event
  */
 export async function logAnalyticsEvent(event: AnalyticsEvent): Promise<void> {
+    if (!supabase) return;
+
     const { error } = await supabase
         .from('analytics')
         .insert({
@@ -117,6 +138,8 @@ export async function logAnalyticsEvent(event: AnalyticsEvent): Promise<void> {
  * Get workflow view counts
  */
 export async function getWorkflowStats(): Promise<Record<string, number>> {
+    if (!supabase) return {};
+
     const { data, error } = await supabase
         .from('analytics')
         .select('workflow_id')
