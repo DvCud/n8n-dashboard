@@ -3,6 +3,7 @@
 // ============================================================
 // 3D Workflow Card Component
 // Interactive card representing a single workflow in the galaxy
+// Uses deterministic seeded random for React purity
 // ============================================================
 
 import { useRef, useState, useMemo, useEffect } from 'react';
@@ -16,6 +17,14 @@ interface WorkflowCard3DProps {
     workflow: WorkflowMetadata;
     color: string;
     index: number;
+}
+
+/**
+ * Seeded pseudo-random number generator for deterministic randomness
+ */
+function seededRandom(seed: number): number {
+    const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
+    return x - Math.floor(x);
 }
 
 /**
@@ -180,7 +189,7 @@ export function WorkflowCard3D({ workflow, color, index }: WorkflowCard3DProps) 
             </group>
 
             {/* Node particles around card */}
-            <NodeParticles count={Math.min(workflow.nodeCount, 15)} color={color} />
+            <NodeParticles count={Math.min(workflow.nodeCount, 15)} color={color} index={index} />
 
             {/* Hover tooltip with HTML */}
             {isHovered && (
@@ -206,23 +215,25 @@ export function WorkflowCard3D({ workflow, color, index }: WorkflowCard3DProps) 
 
 /**
  * NodeParticles - Small orbiting particles representing workflow nodes
+ * Uses seeded random for deterministic positioning
  */
-function NodeParticles({ count, color }: { count: number; color: string }) {
+function NodeParticles({ count, color, index }: { count: number; color: string; index: number }) {
     const particlesRef = useRef<THREE.Points>(null);
     const geometryRef = useRef<THREE.BufferGeometry>(null);
 
-    // Generate particle positions
+    // Generate particle positions using seeded random (deterministic)
     const positions = useMemo(() => {
         const pos = new Float32Array(count * 3);
         for (let i = 0; i < count; i++) {
+            const seed = index * 1000 + i + 1; // Unique seed per card and particle
             const angle = (i / count) * Math.PI * 2;
-            const radius = 2 + Math.random() * 0.5;
+            const radius = 2 + seededRandom(seed) * 0.5;
             pos[i * 3] = Math.cos(angle) * radius;
-            pos[i * 3 + 1] = (Math.random() - 0.5) * 1;
+            pos[i * 3 + 1] = (seededRandom(seed + 100) - 0.5) * 1;
             pos[i * 3 + 2] = Math.sin(angle) * radius;
         }
         return pos;
-    }, [count]);
+    }, [count, index]);
 
     // Setup geometry
     useEffect(() => {

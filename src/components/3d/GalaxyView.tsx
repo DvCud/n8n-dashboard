@@ -6,7 +6,6 @@
 // ============================================================
 
 import { useEffect, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { fetchAllWorkflows, calculateGalaxyPositions } from '@/lib/api';
 import { WorkflowCard3D } from './WorkflowCard3D';

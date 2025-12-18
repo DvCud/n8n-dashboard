@@ -7,7 +7,7 @@
 
 import { Suspense, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Environment, Stars } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera, Stars } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { GalaxyView } from './GalaxyView';

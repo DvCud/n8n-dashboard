@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { fetchAllWorkflows, calculateGalaxyPositions } from '@/lib/api';
-import { supabase, getCachedWorkflows, cacheWorkflows, getCacheMetadata } from '@/lib/supabase';
+import { getCachedWorkflows, cacheWorkflows, getCacheMetadata } from '@/lib/supabase';
 import type { WorkflowMetadata } from '@/types/workflow';
 
 // Cache control: revalidate every 5 minutes
